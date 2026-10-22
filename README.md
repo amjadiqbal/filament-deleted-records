@@ -18,6 +18,10 @@ Filament 4 and 5.
 
 ![The Deleted records page in a Filament panel](https://raw.githubusercontent.com/amjadiqbal/filament-deleted-records/main/art/screenshots/list-light.png)
 
+<p align="center">
+  <img alt="Preview of a deleted record's stored attributes, in dark mode" src="https://raw.githubusercontent.com/amjadiqbal/filament-deleted-records/main/art/screenshots/preview-dark.png" width="80%">
+</p>
+
 ## What it does
 
 `spatie/laravel-deleted-models` copies a model's attributes to a `deleted_models` table when you delete it, and gives
