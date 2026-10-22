@@ -24,7 +24,7 @@ return [
         'deleted_until_indicator' => 'Deleted until :date',
     ],
     'preview' => [
-        'heading' => 'Deleted :type #:key',
+        'heading' => 'Deleted :record',
         'summary' => 'Summary',
         'attributes' => 'Stored attributes',
         'attribute' => 'Attribute',

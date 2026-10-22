@@ -248,8 +248,7 @@ class DeletedRecordResource extends Resource
             ->recordActions([
                 ViewAction::make()
                     ->modalHeading(fn (DeletedModel $record): string => __('filament-deleted-records::deleted-records.preview.heading', [
-                        'type' => DeletedRecords::modelLabel((string) $record->model),
-                        'key' => $record->getAttribute('key'),
+                        'record' => RestoreDeletedRecordAction::describe($record),
                     ]))
                     ->extraModalFooterActions([
                         RestoreDeletedRecordAction::make('restoreFromPreview')->cancelParentActions(),
