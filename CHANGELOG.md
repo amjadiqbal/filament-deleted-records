@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-22
+
+First release.
+
 ### Added
 
 - Deleted records page for records kept by `spatie/laravel-deleted-models`: title, key, type, who deleted it and when.
@@ -16,3 +20,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Optional `deleted_by_id` migration, filled with the signed-in user.
 - Permissions: `authorizeUsing()`, a policy for the deleted-record model, or the original model's policy.
 - Filament 4 and 5, Laravel 12 and 13, PHP 8.3 to 8.5. English translations.
+
+[Unreleased]: https://github.com/amjadiqbal/filament-deleted-records/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/amjadiqbal/filament-deleted-records/releases/tag/v1.0.0
