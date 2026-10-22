@@ -1,0 +1,34 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#0E2230"/>
+    </linearGradient>
+    <linearGradient id="iconbg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#0F3B3A"/>
+    </linearGradient>
+  </defs>
+<g>
+    <rect width="512" height="512" rx="112" fill="url(#iconbg)"/>
+    <!-- record card rising out of the bin -->
+    <g transform="rotate(-8 256 190)">
+      <rect x="168" y="88" width="176" height="150" rx="18" fill="#F8FAFC"/>
+      <circle cx="204" cy="126" r="14" fill="#2DD4BF"/>
+      <rect x="228" y="118" width="92" height="16" rx="8" fill="#94A3B8"/>
+      <rect x="190" y="160" width="132" height="14" rx="7" fill="#CBD5E1"/>
+      <rect x="190" y="190" width="100" height="14" rx="7" fill="#CBD5E1"/>
+    </g>
+    <!-- bin -->
+    <rect x="112" y="226" width="288" height="30" rx="15" fill="#5EEAD4"/>
+    <path d="M140 270 H372 L352 420 Q349 440 328 440 H184 Q163 440 160 420 Z" fill="#134E4A" stroke="#5EEAD4" stroke-width="10" stroke-linejoin="round"/>
+    <line x1="210" y1="300" x2="218" y2="408" stroke="#2DD4BF" stroke-width="10" stroke-linecap="round"/>
+    <line x1="256" y1="300" x2="256" y2="408" stroke="#2DD4BF" stroke-width="10" stroke-linecap="round"/>
+    <line x1="302" y1="300" x2="294" y2="408" stroke="#2DD4BF" stroke-width="10" stroke-linecap="round"/>
+    <!-- restore arrow (counter-clockwise) -->
+    <circle cx="392" cy="392" r="74" fill="#0D9488" stroke="#0F172A" stroke-width="14"/>
+    <g transform="translate(392 392) scale(4.2) translate(-12 -12)" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+    </g>
+</g>
+</svg>
