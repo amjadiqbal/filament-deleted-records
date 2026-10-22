@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-22
+
+### Security
+
+- **Search no longer looks inside every stored attribute.** It matched the whole stored JSON with LIKE, so a user could
+  probe values the preview masks (for example, a password hash) by searching for them. Search now matches the key
+  exactly and the title attributes case-insensitively, and never a masked attribute. Please update.
+
+### Changed
+
+- Bulk restore and bulk permanent delete report records skipped for permission separately from failed restores. Before,
+  bulk restore counted skipped records as "could not be restored", and bulk delete did not mention them.
+- The README states the defaults plainly: without a policy or callback, any panel user can restore and purge. It also
+  covers tenancy, the limits of "Deleted by", and that masking is on screen only.
+- Homepage and docs links point to https://amjad.com.pk/filament/plugins/filament-deleted-records.
+
+### Added
+
+- The tests run on MySQL or Postgres with `DB_TEST_DRIVER`. Checked on MySQL 9.7, Postgres 17 and SQLite.
+
 ## [1.0.0] - 2026-10-22
 
 First release.
@@ -21,5 +41,6 @@ First release.
 - Permissions: `authorizeUsing()`, a policy for the deleted-record model, or the original model's policy.
 - Filament 4 and 5, Laravel 12 and 13, PHP 8.3 to 8.5. English translations.
 
-[Unreleased]: https://github.com/amjadiqbal/filament-deleted-records/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/amjadiqbal/filament-deleted-records/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/amjadiqbal/filament-deleted-records/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/amjadiqbal/filament-deleted-records/releases/tag/v1.0.0

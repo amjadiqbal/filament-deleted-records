@@ -36,18 +36,24 @@ class ForceDeleteDeletedRecordsBulkAction extends BulkAction
             ->authorize(fn (): bool => DeletedRecords::can('forceDeleteAny'))
             ->action(function (Collection $records): void {
                 $deleted = 0;
+                $skipped = 0;
 
                 /** @var DeletedModel $record */
                 foreach ($records as $record) {
-                    if (DeletedRecords::can('forceDelete', $record)) {
-                        $record->delete();
-                        $deleted++;
+                    if (! DeletedRecords::can('forceDelete', $record)) {
+                        $skipped++;
+
+                        continue;
                     }
+
+                    $record->delete();
+                    $deleted++;
                 }
 
                 Notification::make()
-                    ->success()
+                    ->status($skipped ? 'danger' : 'success')
                     ->title(trans_choice('filament-deleted-records::deleted-records.actions.force_delete_bulk.success', $deleted, ['count' => $deleted]))
+                    ->body($skipped ? trans_choice('filament-deleted-records::deleted-records.actions.bulk_skipped', $skipped, ['count' => $skipped]) : null)
                     ->send();
             });
     }

@@ -11,6 +11,7 @@ use AmjadIqbal\FilamentDeletedRecords\Tests\Fixtures\InvoicePolicy;
 use AmjadIqbal\FilamentDeletedRecords\Tests\Fixtures\Note;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Spatie\DeletedModels\Models\DeletedModel;
@@ -98,16 +99,31 @@ it('filters by date deleted', function (): void {
         ->assertCanNotSeeTableRecords([$this->deletedInvoice]);
 });
 
-it('searches the stored attributes and the key', function (): void {
+it('searches the key and the title attributes, case-insensitively', function (): void {
     livewire(ListDeletedRecords::class)
-        ->searchTable('Call back')
-        ->assertCanSeeTableRecords([$this->deletedNote])
-        ->assertCanNotSeeTableRecords([$this->deletedInvoice])
-        ->searchTable('INV-1042')
+        ->searchTable('inv-10')
         ->assertCanSeeTableRecords([$this->deletedInvoice])
         ->assertCanNotSeeTableRecords([$this->deletedNote])
+        ->searchTable((string) $this->note->id)
+        ->assertCanSeeTableRecords([$this->deletedNote])
         ->searchTable('100%')
         ->assertCanNotSeeTableRecords([$this->deletedInvoice, $this->deletedNote]);
+});
+
+it('does not search attributes outside the title attributes, so masked values cannot be probed', function (): void {
+    plugin()->maskedAttributes(['secret']);
+
+    livewire(ListDeletedRecords::class)
+        ->searchTable('shh')
+        ->assertCanNotSeeTableRecords([$this->deletedInvoice])
+        ->searchTable('Call back')
+        ->assertCanNotSeeTableRecords([$this->deletedNote]);
+
+    plugin()->titleAttributes(['number', 'secret']);
+
+    livewire(ListDeletedRecords::class)
+        ->searchTable('shh')
+        ->assertCanNotSeeTableRecords([$this->deletedInvoice]);
 });
 
 it('restores a record through the model, so its restore hooks run', function (): void {
@@ -119,7 +135,7 @@ it('restores a record through the model, so its restore hooks run', function ():
 
     expect($restored)->not->toBeNull()
         ->and($restored->number)->toBe('INV-1042')
-        ->and($restored->lines)->toBe([['item' => 'Widget', 'qty' => 2]])
+        ->and($restored->lines)->toEqual([['item' => 'Widget', 'qty' => 2]]) // MySQL's JSON type may reorder keys
         ->and($restored->secret)->toBe('shh')
         ->and(DeletedModel::query()->find($this->deletedInvoice->id))->toBeNull()
         ->and(Invoice::$restoredHookCalls)->toBe(1);
@@ -165,7 +181,12 @@ it('restores in bulk and reports the ones that failed', function (): void {
 
     livewire(ListDeletedRecords::class)
         ->callTableBulkAction('restoreDeletedRecords', [$this->deletedInvoice, $this->deletedNote])
-        ->assertNotified('Restored 1 record');
+        ->assertNotified(
+            Notification::make()
+                ->danger()
+                ->title('Restored 1 record')
+                ->body('1 could not be restored (for example, a record with the same key already exists).'),
+        );
 
     expect(Note::query()->find($this->note->id))->not->toBeNull()
         ->and(DeletedModel::query()->pluck('id')->all())->toBe([$this->deletedInvoice->id]);
@@ -186,7 +207,7 @@ it('previews the stored attributes with secrets masked', function (): void {
 
     expect($state['number'])->toBe('INV-1042')
         ->and($state['paid'])->toBe('false')
-        ->and($state['lines'])->toBe('[{"item":"Widget","qty":2}]')
+        ->and(json_decode($state['lines'], true))->toEqual([['item' => 'Widget', 'qty' => 2]])
         ->and($state['secret'])->toBe('•••••• (hidden)');
 
     expect(DeletedRecords::restoreStatus($this->deletedInvoice))->toBe(DeletedRecords::STATUS_READY);
@@ -205,10 +226,32 @@ it('follows the original model policy for restore and permanent delete', functio
         ->assertTableActionHidden('restoreDeletedRecord', $this->deletedInvoice)
         ->assertTableActionHidden('forceDeleteDeletedRecord', $this->deletedInvoice)
         ->assertTableActionVisible('restoreDeletedRecord', $this->deletedNote)
-        ->callTableBulkAction('restoreDeletedRecords', [$this->deletedInvoice, $this->deletedNote]);
+        ->callTableBulkAction('restoreDeletedRecords', [$this->deletedInvoice, $this->deletedNote])
+        ->assertNotified(
+            Notification::make()
+                ->danger()
+                ->title('Restored 1 record')
+                ->body('1 was skipped because you are not allowed to change it.'),
+        );
 
     expect(Invoice::query()->find($this->invoice->id))->toBeNull()
         ->and(Note::query()->find($this->note->id))->not->toBeNull();
+});
+
+it('skips and reports records the user may not delete permanently in bulk', function (): void {
+    Gate::policy(Invoice::class, InvoicePolicy::class);
+    InvoicePolicy::$canForceDelete = false;
+
+    livewire(ListDeletedRecords::class)
+        ->callTableBulkAction('forceDeleteDeletedRecords', [$this->deletedInvoice, $this->deletedNote])
+        ->assertNotified(
+            Notification::make()
+                ->danger()
+                ->title('Deleted 1 record permanently')
+                ->body('1 was skipped because you are not allowed to change it.'),
+        );
+
+    expect(DeletedModel::query()->pluck('id')->all())->toBe([$this->deletedInvoice->id]);
 });
 
 it('lets authorizeUsing() decide every ability', function (): void {

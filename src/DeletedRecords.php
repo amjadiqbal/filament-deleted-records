@@ -349,25 +349,32 @@ class DeletedRecords
     }
 
     /**
-     * Search the key and the stored JSON attributes.
+     * Search the key (exact) and the title attributes (case-insensitive, contains). Only the title attributes are
+     * searched, never the whole stored JSON, so a search cannot probe masked values such as password hashes.
      *
      * @param  Builder<DeletedModel>  $query
      * @return Builder<DeletedModel>
      */
     public static function applySearch(Builder $query, string $search): Builder
     {
-        $column = $query->getQuery()->getGrammar()->wrap($query->getModel()->getTable().'.values');
-        $driver = $query->getModel()->getConnection()->getDriverName();
-        $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search).'%';
+        $grammar = $query->getQuery()->getGrammar();
+        $table = $query->getModel()->getTable();
+        $escape = $query->getModel()->getConnection()->getDriverName() === 'sqlite' ? " ESCAPE '\\'" : '';
+        $like = '%'.mb_strtolower(str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search)).'%';
 
-        return $query->where(function (Builder $query) use ($column, $driver, $like, $search): void {
-            $query->where('key', $search);
+        $masked = array_map('strtolower', static::plugin()->getMaskedAttributes());
+        $attributes = array_filter(
+            static::plugin()->getTitleAttributes(),
+            fn (string $attribute): bool => preg_match('/^[A-Za-z0-9_]+$/', $attribute) === 1
+                && ! in_array(strtolower($attribute), $masked, true),
+        );
 
-            match ($driver) {
-                'pgsql' => $query->orWhereRaw("CAST({$column} AS TEXT) ILIKE ?", [$like]),
-                'mysql', 'mariadb' => $query->orWhereRaw("CAST({$column} AS CHAR) LIKE ?", [$like]),
-                default => $query->orWhereRaw("{$column} LIKE ? ESCAPE '\\'", [$like]),
-            };
+        return $query->where(function (Builder $query) use ($attributes, $escape, $grammar, $like, $search, $table): void {
+            $query->where($table.'.key', $search);
+
+            foreach ($attributes as $attribute) {
+                $query->orWhereRaw('LOWER('.$grammar->wrap("{$table}.values->{$attribute}").') LIKE ?'.$escape, [$like]);
+            }
         });
     }
 }

@@ -12,6 +12,8 @@ A recycle bin for your Filament panel. It lists every record that
 stored attributes, and lets you restore a record or delete it permanently, one at a time or in bulk. It works with
 Filament 4 and 5.
 
+**Docs:** [amjad.com.pk/filament/plugins/filament-deleted-records](https://amjad.com.pk/filament/plugins/filament-deleted-records)
+
 [![Latest Version](https://img.shields.io/packagist/v/amjadiqbal/filament-deleted-records.svg?style=flat-square)](https://packagist.org/packages/amjadiqbal/filament-deleted-records)
 [![PHP Version](https://img.shields.io/packagist/php-v/amjadiqbal/filament-deleted-records?style=flat-square)](https://packagist.org/packages/amjadiqbal/filament-deleted-records)
 [![License](https://img.shields.io/packagist/l/amjadiqbal/filament-deleted-records.svg?style=flat-square)](LICENSE.md)
@@ -31,20 +33,28 @@ you `Model::restore($key)` in code. This plugin adds the screen for it:
   `label`, `subject`, `email`, `number`, `reference` or `slug` that is filled), the key, the model type, who deleted
   it and when.
 - **Preview before you restore.** A modal shows every stored attribute and whether a restore can work. It warns you if a
-  live record already has that key, or if the model class no longer exists. Passwords, remember tokens, API tokens and
-  two-factor secrets are masked.
+  row with that key is still in the table (soft-deleted rows count, because the key is taken), or if the model class
+  no longer exists. The warning does not disable Restore: a restore that fails is reported and the copy is kept.
+  Passwords, remember tokens, API tokens and two-factor secrets are masked on screen. They are still stored in
+  `deleted_models`, because the base package keeps hidden attributes so a restore is complete.
 - **Restore** puts the record back with the same key and attributes. It goes through the model's own `restore()`, so
   your `beforeRestoringModel` and `afterRestoringModel` hooks and the package's events run. When the panel has a
   resource for the model, the notification links to the restored record.
 - **Delete permanently** removes the stored copy for good.
-- **Bulk restore and bulk permanent delete.** A failed restore (for example, the key is taken) is reported and its copy
-  is kept.
-- **Filters** by model type, by who deleted it and by date range, plus search over the key and the stored attributes.
-- **Who deleted it.** An optional migration adds a `deleted_by_id` column, and the plugin fills it with the signed-in
-  user when a copy is written.
-- **Permissions.** The original model's policy decides who may restore or permanently delete its records. You can also
-  register a policy for the deleted-record model, or pass one callback.
+- **Bulk restore and bulk permanent delete.** The notification counts what was done, what failed (for example, the key
+  is taken; the copy is kept) and what was skipped because the user may not touch it.
+- **Filters** by model type, by who deleted it and by date range. Search matches the key exactly, and the title
+  attributes (see `titleAttributes()`) case-insensitively. Other stored attributes are not searched, so masked values
+  cannot be probed through search.
+- **Who deleted it.** An optional migration adds a `deleted_by_id` column, and the plugin fills it with the user signed
+  in to the panel's guard when a copy is written. Deletes from queued jobs, console commands and scheduled tasks have
+  no signed-in user, so the column stays empty for them. A user who was later removed shows as `#id`.
+- **Permissions.** By default, anyone who can open the panel can list, preview, restore and permanently delete. To
+  narrow that, give the original model's policy `restore` / `forceDelete` methods, register a policy for the
+  deleted-record model, or pass one callback. See [Permissions](#permissions).
 - Works in light and dark mode with no custom theme or build step. Translatable (English included).
+- **Multi-tenant panels:** the page is not scoped to a tenant, so it lists every tenant's deleted records together. Use
+  `authorizeUsing()` to keep it to central admins, or extend the resource and scope `getEloquentQuery()` yourself.
 
 ## Requirements
 
@@ -125,7 +135,7 @@ php artisan vendor:publish --tag="filament-deleted-records-config"
 ```php
 return [
     'track_deleted_by' => true, // set to false to stop recording deleted_by_id
-    'user_model' => null,       // null uses the default auth guard's user model
+    'user_model' => null,       // null uses the default auth guard's user model; set it if your panel uses another guard
 ];
 ```
 
@@ -143,12 +153,13 @@ The plugin checks each action in this order:
    `$ability` is one of `viewAny`, `view`, `restore`, `forceDelete`, `restoreAny` or `forceDeleteAny`.
 2. **A policy for the deleted-record model** (`Spatie\DeletedModels\Models\DeletedModel`, or your own class set in
    `deleted-models.model`), if you register one. It gets the same abilities.
-3. **The original model's policy.** For a record, if that policy has a `view`, `restore` or `forceDelete` method, it
-   decides, and it receives the record as it would be restored. So `InvoicePolicy::restore()` decides who can restore a
-   deleted invoice.
-4. Otherwise the action is allowed. Access to the panel is then the only gate.
+3. **The original model's policy.** For a record, if that policy has a method named exactly `view`, `restore` or
+   `forceDelete`, it decides, and it receives the record as it would be restored. So `InvoicePolicy::restore()`
+   decides who can restore a deleted invoice. A policy without that method does not block the action.
+4. Otherwise the action is allowed. Access to the panel is then the only gate. This includes `viewAny`, `restoreAny`
+   and `forceDeleteAny` (listing the page and showing the bulk actions) whenever neither 1 nor 2 applies.
 
-Bulk actions also check each record and skip the ones the user may not touch.
+Bulk actions also check each record, skip the ones the user may not touch, and say how many were skipped.
 
 ## Testing
 
@@ -157,6 +168,8 @@ composer test
 ```
 
 `scripts/ci-local.sh` runs Pint, PHPStan and the tests on PHP 8.3 to 8.5, Laravel 12 and 13, and Filament 4 and 5.
+The tests use SQLite; set `DB_TEST_DRIVER=mysql` or `pgsql` (with `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`,
+`DB_DATABASE`) to run them on a real server.
 
 ## Changelog
 

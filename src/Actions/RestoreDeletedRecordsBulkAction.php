@@ -37,10 +37,14 @@ class RestoreDeletedRecordsBulkAction extends BulkAction
             ->authorize(fn (): bool => DeletedRecords::can('restoreAny'))
             ->action(function (Collection $records): void {
                 $restored = 0;
+                $failed = 0;
+                $skipped = 0;
 
                 /** @var DeletedModel $record */
                 foreach ($records as $record) {
                     if (! DeletedRecords::can('restore', $record)) {
+                        $skipped++;
+
                         continue;
                     }
 
@@ -49,28 +53,20 @@ class RestoreDeletedRecordsBulkAction extends BulkAction
                         $restored++;
                     } catch (Throwable $exception) {
                         report($exception);
+                        $failed++;
                     }
                 }
 
-                $total = $records->count();
-
-                if ($restored === $total) {
-                    Notification::make()
-                        ->success()
-                        ->title(trans_choice('filament-deleted-records::deleted-records.actions.restore_bulk.success', $restored, ['count' => $restored]))
-                        ->send();
-
-                    return;
-                }
+                $title = trans_choice('filament-deleted-records::deleted-records.actions.restore_bulk.success', $restored, ['count' => $restored]);
+                $body = collect([
+                    $failed ? trans_choice('filament-deleted-records::deleted-records.actions.restore_bulk.failed', $failed, ['count' => $failed]) : null,
+                    $skipped ? trans_choice('filament-deleted-records::deleted-records.actions.bulk_skipped', $skipped, ['count' => $skipped]) : null,
+                ])->filter()->implode(' ');
 
                 Notification::make()
-                    ->danger()
-                    ->title(trans_choice('filament-deleted-records::deleted-records.actions.restore_bulk.success', $restored, ['count' => $restored]))
-                    ->body(__('filament-deleted-records::deleted-records.actions.restore_bulk.partial', [
-                        'restored' => $restored,
-                        'total' => $total,
-                        'failed' => $total - $restored,
-                    ]))
+                    ->status($failed || $skipped ? 'danger' : 'success')
+                    ->title($title)
+                    ->body($body ?: null)
                     ->send();
             });
     }

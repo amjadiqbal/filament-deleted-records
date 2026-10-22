@@ -67,11 +67,25 @@ abstract class TestCase extends Orchestra
     {
         $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('a', 32)));
         $app['config']->set('database.default', 'testing');
+
+        // DB_TEST_DRIVER=mysql|pgsql (with DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD) runs the suite on a real server.
+        if ($driver = env('DB_TEST_DRIVER')) {
+            $app['config']->set('database.default', $driver);
+            $app['config']->set("database.connections.{$driver}", array_merge($app['config']->get("database.connections.{$driver}"), [
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT'),
+                'database' => env('DB_DATABASE', 'dr_test'),
+                'username' => env('DB_USERNAME', 'root'),
+                'password' => env('DB_PASSWORD', ''),
+            ]));
+        }
         $app['config']->set('auth.providers.users.model', User::class);
     }
 
     protected function defineDatabaseMigrations(): void
     {
+        Schema::dropAllTables();
+
         Schema::create('users', function (Blueprint $table): void {
             $table->id();
             $table->string('name');

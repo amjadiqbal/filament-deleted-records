@@ -13,7 +13,7 @@
         "undelete",
         "eloquent"
     ],
-    "homepage": "https://github.com/amjadiqbal/filament-deleted-records",
+    "homepage": "https://amjad.com.pk/filament/plugins/filament-deleted-records",
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -25,7 +25,8 @@
     ],
     "support": {
         "issues": "https://github.com/amjadiqbal/filament-deleted-records/issues",
-        "source": "https://github.com/amjadiqbal/filament-deleted-records"
+        "source": "https://github.com/amjadiqbal/filament-deleted-records",
+        "docs": "https://amjad.com.pk/filament/plugins/filament-deleted-records"
     },
     "require": {
         "php": "^8.3",

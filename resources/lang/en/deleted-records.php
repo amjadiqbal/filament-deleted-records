@@ -36,6 +36,7 @@ return [
         'masked' => '•••••• (hidden)',
     ],
     'actions' => [
+        'bulk_skipped' => ':count was skipped because you are not allowed to change it.|:count were skipped because you are not allowed to change them.',
         'restore' => [
             'label' => 'Restore',
             'modal_heading' => 'Restore :record?',
@@ -48,7 +49,7 @@ return [
             'label' => 'Restore selected',
             'modal_heading' => 'Restore the selected records?',
             'success' => 'Restored :count record|Restored :count records',
-            'partial' => 'Restored :restored of :total. :failed could not be restored (a record with the same key may already exist).',
+            'failed' => ':count could not be restored (for example, a record with the same key already exists).|:count could not be restored (for example, a record with the same key already exists).',
         ],
         'force_delete' => [
             'label' => 'Delete permanently',

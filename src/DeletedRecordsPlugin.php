@@ -197,7 +197,7 @@ class DeletedRecordsPlugin implements Plugin
     }
 
     /**
-     * Stored attributes tried in order to name a deleted record in the list.
+     * Stored attributes tried in order to name a deleted record in the list. Search also looks in these.
      *
      * @param  array<int, string>  $attributes
      */
@@ -255,8 +255,9 @@ class DeletedRecordsPlugin implements Plugin
 
     /**
      * Decide who may see, restore or permanently delete deleted records.
-     * The closure receives `$ability` (viewAny, view, restore, forceDelete), `$record` (the deleted record, or null
-     * for viewAny) and `$user`, and returns a bool. It replaces the policy checks.
+     * The closure receives `$ability` (viewAny, view, restore, forceDelete, restoreAny, forceDeleteAny), `$record`
+     * (the deleted record, or null for viewAny, restoreAny and forceDeleteAny) and `$user`, and returns a bool. It
+     * replaces the policy checks.
      */
     public function authorizeUsing(?Closure $callback): static
     {
